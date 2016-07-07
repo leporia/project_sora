@@ -26,10 +26,10 @@ public class MainPanel extends JPanel implements ActionListener {
 		//Setting login panel
 		JPanel loginPanel = new JPanel();
 
-		connectButton = new JButton("Connect");
-		disconnectButton = new JButton("Disconnect");
-		username = new JTextField();
-		ip = new JTextField();
+		this.connectButton = new JButton("Connect");
+		this.disconnectButton = new JButton("Disconnect");
+		this.username = new JTextField();
+		this.ip = new JTextField();
 		JLabel usernameLabel = new JLabel("Username:");
 		JLabel ipLabel = new JLabel("IP:");
 
@@ -37,11 +37,11 @@ public class MainPanel extends JPanel implements ActionListener {
 		loginPanel.add(this.aboutButton);
 		loginPanel.add(this.ipLabel);
 		loginPanel.add(usernameLabel);
-		loginPanel.add(username);
+		loginPanel.add(this.username);
 		loginPanel.add(ipLabel);
-		loginPanel.add(ip);
-		loginPanel.add(connectButton);
-		loginPanel.add(disconnectButton);
+		loginPanel.add(this.ip);
+		loginPanel.add(this.connectButton);
+		loginPanel.add(this.disconnectButton);
 
 		loginPanel.setVisible(true);
 
@@ -72,10 +72,10 @@ public class MainPanel extends JPanel implements ActionListener {
 		//Setting main panel
 		this.setLayout(new BorderLayout());
 
-		JScrollPane scroll = new JScrollPane(chat);
+		JScrollPane scroll = new JScrollPane(this.chat);
 
-		chat.setEditable(false);
-		chat.setPreferredSize(new Dimension(200, 200));
+		this.chat.setEditable(false);
+		this.chat.setPreferredSize(new Dimension(200, 200));
 
 		this.add(input, BorderLayout.SOUTH);
 		this.add(sidePanel, BorderLayout.EAST);

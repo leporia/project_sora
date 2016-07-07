@@ -16,7 +16,6 @@ class ConnectionManager {
 		try {
 			localIP = Inet4Address.getLocalHost().getHostAddress();
 		} catch (UnknownHostException e) { e.printStackTrace(); }
-
 	}
 
 	public String receive() {
@@ -77,7 +76,7 @@ class ConnectionManager {
 			System.out.println("Sending message at " + ipList.get(i));
 			if (!ipList.get(i).equals(localIP)) {
 				try {
-					Socket socket = new Socket(ipList.get(i), port);
+					Socket socket = new Socket(ipList.get(i), this.port);
 
 					PrintWriter out = new PrintWriter(
 						socket.getOutputStream(), true);
@@ -93,6 +92,7 @@ class ConnectionManager {
 					System.out.println(
 						"Incoming warning from last connection");
 					e.printStackTrace();
+					//TODO try to resend the message
 				}
 			}
 		}
@@ -102,7 +102,7 @@ class ConnectionManager {
 		System.out.println("Sending new list");
 
 		try {
-			Socket socket = new Socket(ip, port);
+			Socket socket = new Socket(ip, this.port);
 
 			PrintWriter out = new PrintWriter(
 				socket.getOutputStream(), true);
@@ -117,12 +117,14 @@ class ConnectionManager {
 		} catch (Exception e) { 
 			System.out.println("Incoming warning from last connection");
 			e.printStackTrace();
-			}
+
+			//TODO try to resend list
+		}
 
 		for (int i = 0; i < ipList.size(); i++) {
 			if (!ipList.get(i).equals(ip) && !ipList.get(i).equals(localIP)) {
 				try {
-					Socket socket = new Socket(ipList.get(i), port);
+					Socket socket = new Socket(ipList.get(i), this.port);
 
 					PrintWriter out = new PrintWriter(
 						socket.getOutputStream(), true);
@@ -135,9 +137,12 @@ class ConnectionManager {
 					socket.close();
 
 				} catch (Exception e) { 
-					System.out.println("Incoming warning from last connection");
+					System.out.println(
+							"Incoming warning from last connection");
 					e.printStackTrace();
-					}
+
+					//TODO try to resend peer
+				}
 			}
 		}
 	}
@@ -161,6 +166,8 @@ class ConnectionManager {
 		} catch (Exception e) { 
 			System.out.println("Incoming warning from last connection");
 			e.printStackTrace();
-			}
+
+			//TODO try to resend error
+		}
 	}
 }

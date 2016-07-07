@@ -11,7 +11,6 @@ class Manager implements ActionListener, Runnable {
 
 	//TODO fix rejoin bug
 	//TODO make your messages more outstanding
-	//TODO add remove from list debug
 
 	public static final String version = "1.1";
 
@@ -30,20 +29,20 @@ class Manager implements ActionListener, Runnable {
 	public Manager(MainPanel mainPanel, ConnectionManager linker) {
 		this.mainPanel = mainPanel;
 		this.linker = linker;
-
-		mainPanel.version = this.version;
+		this.mainPanel.version = this.version;
 
 		this.initUI();
 	}
 
 	private void initUI() {
-		mainPanel.ipLabel.setText(linker.localIP);
-		mainPanel.input.addActionListener(this);
-		mainPanel.connectButton.addActionListener(this);
-		mainPanel.disconnectButton.addActionListener(this);
+		this.mainPanel.ipLabel.setText(linker.localIP);
+		this.mainPanel.input.addActionListener(this);
+		this.mainPanel.connectButton.addActionListener(this);
+		this.mainPanel.disconnectButton.addActionListener(this);
+		this.mainPanel.ip.addActionListener(this);
 
-		mainPanel.connectButton.setEnabled(true);
-		mainPanel.disconnectButton.setEnabled(false);
+		this.mainPanel.connectButton.setEnabled(true);
+		this.mainPanel.disconnectButton.setEnabled(false);
 	}
 
 	public void start() {
@@ -53,7 +52,7 @@ class Manager implements ActionListener, Runnable {
 
 	public void run() {
 		while (this.listen) {
-			String text = linker.receive();
+			String text = this.linker.receive();
 			if (text != null) {
 				System.out.println(text);
 
@@ -67,73 +66,71 @@ class Manager implements ActionListener, Runnable {
 						, Color.RED);
 				} else if (decodedMsg.version.equals(this.version)) {
 					switch (decodedMsg.Type) {
-						case "COMMAND":
-							switch (decodedMsg.cmd) {
-								case "Print":
-									this.chatPrint("[" + decodedMsg.time + "] "
-										+ decodedMsg.username + ": "
-										+ decodedMsg.text,
-											new Color(0, 100, 0));
-
-									if (decodedMsg.text.equals("left!")) {
-										usernameList.remove(
-											decodedMsg.username);
-										this.printList();
-										linker.ipList.remove(decodedMsg.ip);
-										System.out.println(
-												"User removed from list");
-									} else if (
-										decodedMsg.text.equals("joined!")) {
-										usernameList.add(decodedMsg.username);
-										this.printList();
-									}
-									break;
-								case "SendList":
-									System.out.println(
-										"List send request recived");
-
-									this.sendList(
-										decodedMsg.ip, decodedMsg.username);
-							}
-							break;
-						case "MESSAGE":
+					case "COMMAND":
+						switch (decodedMsg.cmd) {
+						case "Print":
 							this.chatPrint("[" + decodedMsg.time + "] "
 								+ decodedMsg.username + ": "
-								+ decodedMsg.text, Color.BLACK);
+								+ decodedMsg.text,
+									new Color(0, 100, 0));
+
+							if (decodedMsg.text.equals("left!")) {
+								this.usernameList.remove(
+									decodedMsg.username);
+								this.printList();
+								linker.ipList.remove(decodedMsg.ip);
+								System.out.println(
+										"User removed from list");
+							} else if (
+								decodedMsg.text.equals("joined!")) {
+								this.usernameList.add(decodedMsg.username);
+								this.printList();
+							}
 							break;
-						case "PEERLIST":
-							System.out.println("New list arrived");
-							linker.ipList = decodedMsg.ipList;
-							usernameList = decodedMsg.usernameList;
-							usernameList.add(this.username);
-							this.printList();
+						case "SendList":
+							System.out.println(
+								"List send request recived");
+							this.sendList(
+								decodedMsg.ip, decodedMsg.username);
+						}
+						break;
+					case "MESSAGE":
+						this.chatPrint("[" + decodedMsg.time + "] "
+							+ decodedMsg.username + ": "
+							+ decodedMsg.text, Color.BLACK);
+						break;
+					case "PEERLIST":
+						System.out.println("New list arrived");
+						this.linker.ipList = decodedMsg.ipList;
+						this.usernameList = decodedMsg.usernameList;
+						this.usernameList.add(this.username);
+						this.printList();
 
-							this.chatPrint(
-									"Connected to the network", Color.BLUE);	
+						this.chatPrint(
+								"Connected to the network", Color.BLUE);	
 
-							Message join = new Message();
-							join.Type = "COMMAND";
-							join.cmd = "Print";
-							join.text = "joined!";
+						Message join = new Message();
+						join.Type = "COMMAND";
+						join.cmd = "Print";
+						join.text = "joined!";
 
-							this.send(join);
-							break;
-						case "PEER":
-							System.out.println("New peer ip arrived");
-							System.out.println(decodedMsg.ip);
-							linker.ipList.add(decodedMsg.ip);
+						this.send(join);
+						break;
+					case "PEER":
+						System.out.println("New peer ip arrived");
+						System.out.println(decodedMsg.ip);
+						this.linker.ipList.add(decodedMsg.ip);
 					}
 
 				} else {
 					System.out.println("Rejecting connection");
-					linker.ipList.remove(decodedMsg.ip);
+					this.linker.ipList.remove(decodedMsg.ip);
 					Message error = new Message();
 					error.version = this.version;
 					error.Type = "ERROR";
 					error.error = "VERSION";
 					System.out.println(gson.toJson(error));
-					linker.sendSingle(gson.toJson(error), decodedMsg.ip);
-
+					this.linker.sendSingle(gson.toJson(error), decodedMsg.ip);
 				}
 			}
 		}
@@ -145,22 +142,22 @@ class Manager implements ActionListener, Runnable {
 		this.connected = true;
 		this.username = mainPanel.username.getText();	
 
-		mainPanel.connectButton.setEnabled(false);
-		mainPanel.disconnectButton.setEnabled(true);
-		mainPanel.username.setEditable(false);
-		mainPanel.ip.setEditable(false);
+		this.mainPanel.connectButton.setEnabled(false);
+		this.mainPanel.disconnectButton.setEnabled(true);
+		this.mainPanel.username.setEditable(false);
+		this.mainPanel.ip.setEditable(false);
 
-		usernameList.add(this.username);
+		this.usernameList.add(this.username);
 		this.printList();
 
-		if (mainPanel.ip.getText().equals("localhost")) {
-			linker.ipList.add(linker.localIP);
+		if (this.mainPanel.ip.getText().equals("localhost")) {
+			this.linker.ipList.add(linker.localIP);
 			this.chatPrint(
 				"Connection ready, waiting for connections on "
-				+ linker.localIP, Color.BLUE);
+				+ this.linker.localIP, Color.BLUE);
 
 		} else {
-			linker.ipList.add(mainPanel.ip.getText());
+			this.linker.ipList.add(mainPanel.ip.getText());
 			Message msg = new Message();
 			msg.Type = "COMMAND";
 			msg.cmd = "SendList";
@@ -177,14 +174,14 @@ class Manager implements ActionListener, Runnable {
 		this.send(left);
 
 		this.listen = false;
-		mainPanel.connectButton.setEnabled(true);
-		mainPanel.disconnectButton.setEnabled(false);
-		mainPanel.username.setEditable(true);
-		mainPanel.ip.setEditable(true);
-		linker.ipList = new ArrayList<String>();
-		usernameList = new ArrayList<String>();
+		this.mainPanel.connectButton.setEnabled(true);
+		this.mainPanel.disconnectButton.setEnabled(false);
+		this.mainPanel.username.setEditable(true);
+		this.mainPanel.ip.setEditable(true);
+		this.linker.ipList = new ArrayList<String>();
+		this.usernameList = new ArrayList<String>();
 		this.chatPrint("Disconnected", Color.BLUE);
-		mainPanel.connectedLabel.setText("");
+		this.mainPanel.connectedLabel.setText("");
 		this.connected = false;
 	}
 
@@ -194,7 +191,7 @@ class Manager implements ActionListener, Runnable {
 			msg.time = timeFormat.format(System.currentTimeMillis());
 			msg.ip = linker.localIP;
 			msg.username = this.username;
-			linker.send(gson.toJson(msg));
+			this.linker.send(gson.toJson(msg));
 		} else {
 			this.chatPrint("Error: Not connected", Color.RED);
 		}
@@ -218,24 +215,26 @@ class Manager implements ActionListener, Runnable {
 			msg.username = remoteUsername;
 			msg.time = timeFormat.format(System.currentTimeMillis());
 
-			linker.sendList(gson.toJson(list), remoteIP, gson.toJson(msg));
+			this.linker.sendList(gson.toJson(list), remoteIP, gson.toJson(msg));
 		} else {
 			this.chatPrint("Error: Not connected", Color.RED);
 		}
 	}
 	
 	public void actionPerformed(ActionEvent e) {
-		if (e.getSource() == mainPanel.connectButton) {
-			if (mainPanel.username.getText().hashCode() != 0 &&
-					mainPanel.ip.getText().hashCode() != 0) {
-			this.connect();
+		if (e.getSource() == this.mainPanel.connectButton
+				|| e.getSource() == this.mainPanel.ip) {
+			if (this.mainPanel.username.getText().hashCode() != 0
+					&& this.mainPanel.ip.getText().hashCode() != 0
+					&& !this.connected) {
+				this.connect();
 			} else {
 				this.chatPrint(
 					"Please insert a username and a valid ip", Color.RED);
 			}
-		} else if (e.getSource() == mainPanel.disconnectButton) {
+		} else if (e.getSource() == this.mainPanel.disconnectButton) {
 			this.disconnect();
-		} else if (e.getSource() == mainPanel.input) {
+		} else if (e.getSource() == this.mainPanel.input) {
 			JTextField textbox = (JTextField) e.getSource();
 
 			String text = textbox.getText();
@@ -246,7 +245,7 @@ class Manager implements ActionListener, Runnable {
 				this.adminPanel.sendBtn.addActionListener(this);
 			} else if (text.hashCode() != 0) {
 				this.chatPrint("["
-					+ timeFormat.format(System.currentTimeMillis())
+					+ this.timeFormat.format(System.currentTimeMillis())
 					+ "] You: " + text, Color.BLACK);
 
 				Message msg = new Message();
@@ -265,7 +264,7 @@ class Manager implements ActionListener, Runnable {
 			msg.ip = this.adminPanel.ip.getText();
 			msg.username = this.adminPanel.username.getText();
 			if (this.adminPanel.time.getText().equals("now")) {
-				msg.time = timeFormat.format(System.currentTimeMillis());
+				msg.time = this.timeFormat.format(System.currentTimeMillis());
 			} else {
 				msg.time = this.adminPanel.time.getText();
 			}
@@ -277,7 +276,7 @@ class Manager implements ActionListener, Runnable {
 	private void printList() {
 		String tmp = "<html>Connected users:<br>" + this.username + "<br>";
 		for (int i = 0; i < usernameList.size(); i++) {
-			if (!usernameList.get(i).equals(this.username)) {
+			if (!this.usernameList.get(i).equals(this.username)) {
 				tmp = tmp + usernameList.get(i) + "<br>";
 			}
 		}
@@ -286,15 +285,15 @@ class Manager implements ActionListener, Runnable {
 	}
 
 	private void chatPrint(String msg, Color c) {
-		StyledDocument doc = mainPanel.chat.getStyledDocument();
+		StyledDocument doc = this.mainPanel.chat.getStyledDocument();
 
-		Style style = mainPanel.chat.addStyle("Default", null);
+		Style style = this.mainPanel.chat.addStyle("Default", null);
 		StyleConstants.setForeground(style, c);
 
 		try {
 			doc.insertString(doc.getLength(), msg + "\n", style);
 		} catch (BadLocationException e) {}
 
-		mainPanel.chat.setCaretPosition(doc.getLength());
+		this.mainPanel.chat.setCaretPosition(doc.getLength());
 	}
 }
