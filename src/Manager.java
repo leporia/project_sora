@@ -30,7 +30,7 @@ class Manager implements ActionListener, Runnable {
 		this.mainPanel = mainPanel;
 		this.linker = linker;
 		this.mainPanel.version = this.version;
-
+		
 		this.initUI();
 	}
 
@@ -59,47 +59,48 @@ class Manager implements ActionListener, Runnable {
 				Message decodedMsg =
 					gson.fromJson(text, Message.class);
 
-				if (decodedMsg.Type.equals("ERROR")) {
+				if (decodedMsg.type.equals(MessageType.ERROR)) {
 					this.chatPrint(
 						"Error: Connection rejected, wrong"
 						+ " version"
 						, Color.RED);
 				} else if (decodedMsg.version.equals(this.version)) {
-					switch (decodedMsg.Type) {
-					case "COMMAND":
+					switch (decodedMsg.type) {
+					case COMMAND:
 						switch (decodedMsg.cmd) {
-						case "Print":
+						case PRINT:
 							this.chatPrint("[" + decodedMsg.time + "] "
 								+ decodedMsg.username + ": "
 								+ decodedMsg.text,
 									new Color(0, 100, 0));
 
-							if (decodedMsg.text.equals("left!")) {
-								this.usernameList.remove(
-									decodedMsg.username);
-								this.printList();
-								linker.ipList.remove(decodedMsg.ip);
-								System.out.println(
-										"User removed from list");
-							} else if (
-								decodedMsg.text.equals("joined!")) {
-								this.usernameList.add(decodedMsg.username);
-								this.printList();
-							}
+						case LEFT:
+							this.usernameList.remove(decodedMsg.username);
+							this.printList();
+							linker.ipList.remove(decodedMsg.ip);
+							System.out.println("User removed from list");
+							this.chatPrint("[" + decodedMsg.time + "] "
+								+ decodedMsg.username + " left!"
+								, new Color(0, 100, 0));
 							break;
-						case "SendList":
-							System.out.println(
-								"List send request recived");
-							this.sendList(
-								decodedMsg.ip, decodedMsg.username);
+						case JOIN:
+							this.usernameList.add(decodedMsg.username);
+							this.printList();
+							this.chatPrint("[" + decodedMsg.time + "] "
+								+ decodedMsg.username + " joined!"
+								, new Color(0, 100, 0));
+							break;
+						case SENDLIST:
+							System.out.println("List send request recived");
+							this.sendList(decodedMsg.ip, decodedMsg.username);
 						}
 						break;
-					case "MESSAGE":
+					case MESSAGE:
 						this.chatPrint("[" + decodedMsg.time + "] "
 							+ decodedMsg.username + ": "
 							+ decodedMsg.text, Color.BLACK);
 						break;
-					case "PEERLIST":
+					case PEERLIST:
 						System.out.println("New list arrived");
 						this.linker.ipList = decodedMsg.ipList;
 						this.usernameList = decodedMsg.usernameList;
@@ -110,13 +111,12 @@ class Manager implements ActionListener, Runnable {
 								"Connected to the network", Color.BLUE);	
 
 						Message join = new Message();
-						join.Type = "COMMAND";
-						join.cmd = "Print";
-						join.text = "joined!";
+						join.type = MessageType.COMMAND;
+						join.cmd = MessageCmd.JOIN;
 
 						this.send(join);
 						break;
-					case "PEER":
+					case PEER:
 						System.out.println("New peer ip arrived");
 						System.out.println(decodedMsg.ip);
 						this.linker.ipList.add(decodedMsg.ip);
@@ -127,8 +127,8 @@ class Manager implements ActionListener, Runnable {
 					this.linker.ipList.remove(decodedMsg.ip);
 					Message error = new Message();
 					error.version = this.version;
-					error.Type = "ERROR";
-					error.error = "VERSION";
+					error.type = MessageType.ERROR;
+					error.error = MessageError.VERSION;
 					System.out.println(gson.toJson(error));
 					this.linker.sendSingle(gson.toJson(error), decodedMsg.ip);
 				}
@@ -159,8 +159,8 @@ class Manager implements ActionListener, Runnable {
 		} else {
 			this.linker.ipList.add(mainPanel.ip.getText());
 			Message msg = new Message();
-			msg.Type = "COMMAND";
-			msg.cmd = "SendList";
+			msg.type = MessageType.COMMAND;
+			msg.cmd = MessageCmd.SENDLIST;
 
 			this.send(msg);
 		}
@@ -168,9 +168,8 @@ class Manager implements ActionListener, Runnable {
 
 	public void disconnect() {
 		Message left = new Message();
-		left.Type = "COMMAND";
-		left.cmd = "Print";
-		left.text = "left!";
+		left.type = MessageType.COMMAND;
+		left.cmd = MessageCmd.LEFT;
 		this.send(left);
 
 		this.listen = false;
@@ -201,7 +200,7 @@ class Manager implements ActionListener, Runnable {
 		if (this.connected == true) {
 			Message list = new Message();
 			list.version = this.version;
-			list.Type = "PEERLIST";
+			list.type = MessageType.PEERLIST;
 			list.ipList = linker.ipList;
 			list.usernameList = usernameList;
 			list.time = timeFormat.format(System.currentTimeMillis());
@@ -210,12 +209,13 @@ class Manager implements ActionListener, Runnable {
 
 			Message msg = new Message();
 			msg.version = this.version;
-			msg.Type = "PEER";
+			msg.type = MessageType.PEER;
 			msg.ip = remoteIP;
 			msg.username = remoteUsername;
 			msg.time = timeFormat.format(System.currentTimeMillis());
 
-			this.linker.sendList(gson.toJson(list), remoteIP, gson.toJson(msg));
+			this.linker.sendList(
+					gson.toJson(list), remoteIP, gson.toJson(msg));
 		} else {
 			this.chatPrint("Error: Not connected", Color.RED);
 		}
@@ -249,15 +249,18 @@ class Manager implements ActionListener, Runnable {
 					+ "] You: " + text, Color.BLACK);
 
 				Message msg = new Message();
-				msg.Type = "MESSAGE";
+				msg.type = MessageType.MESSAGE;
 				msg.text = text;
 
 				this.send(msg);
 			}
 		} else if (e.getSource() == adminPanel.sendBtn) {
+			//TODO get this working
+
+			/*
 			Message msg = new Message();
 			msg.version = this.adminPanel.version.getText();
-			msg.Type = this.adminPanel.type.getText();
+			msg.type = this.adminPanel.type.getText();
 			msg.text = this.adminPanel.text.getText();
 			msg.error = this.adminPanel.error.getText();
 			msg.cmd = this.adminPanel.cmd.getText();
@@ -270,6 +273,7 @@ class Manager implements ActionListener, Runnable {
 			}
 
 			linker.send(gson.toJson(msg));
+			*/
 		}
 	}
 

@@ -3,10 +3,10 @@ import java.util.*;
 class Message {
 
 	public String version;
-	public String Type;
+	public MessageType type;
+	public MessageCmd cmd;
+	public MessageError error;
 	public String text;
-	public String error;
-	public String cmd;
 	public String ip;
 	public String username;
 	public String time;
