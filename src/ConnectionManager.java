@@ -92,7 +92,7 @@ class ConnectionManager {
 					System.out.println(
 						"Incoming warning from last connection");
 					e.printStackTrace();
-					//TODO try to resend the message
+					this.send(msg);
 				}
 			}
 		}
@@ -166,8 +166,7 @@ class ConnectionManager {
 		} catch (Exception e) { 
 			System.out.println("Incoming warning from last connection");
 			e.printStackTrace();
-
-			//TODO try to resend error
+			this.sendSingle(msg, ip);
 		}
 	}
 }

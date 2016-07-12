@@ -9,10 +9,22 @@ public class ChatClient extends Thread {
 
 	public ChatClient() {
 		try {
-		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+			for (javax.swing.UIManager.LookAndFeelInfo info :
+				javax.swing.UIManager.getInstalledLookAndFeels()) {
+				if ("com.sun.java.swing.plaf.gtk.GTKLookAndFeel".equals(
+					info.getClassName())) {   
+					javax.swing.UIManager.setLookAndFeel(info.getClassName());
+					break;
+				} 
+			}
 		} catch (Exception e) {
-			//TODO handle this
+			System.out.println("Setting default look and feel");
+			try {
+				UIManager.setLookAndFeel(
+						UIManager.getSystemLookAndFeelClassName());
+			} catch (Exception ex) {}
 		}
+
 
 		ConnectionManager linker = new ConnectionManager();
 		MainPanel mainPanel = new MainPanel();

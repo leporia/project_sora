@@ -13,9 +13,12 @@ public class MainPanel extends JPanel implements ActionListener {
 	public JButton addButton;
 	public JTextField username;
 	public JTextField ip;
-	public JLabel ipLabel = new JLabel();
+	public JLabel localIpLabel = new JLabel();
 	public JButton aboutButton = new JButton("About");
 	public String version;
+	public JLabel usernameLabel;
+	public JLabel ipLabel;
+	public JLabel aboutLabel;
 
 	public MainPanel() {
 		this.aboutButton.addActionListener(this);
@@ -30,15 +33,15 @@ public class MainPanel extends JPanel implements ActionListener {
 		this.disconnectButton = new JButton("Disconnect");
 		this.username = new JTextField();
 		this.ip = new JTextField();
-		JLabel usernameLabel = new JLabel("Username:");
-		JLabel ipLabel = new JLabel("IP:");
+		this.usernameLabel = new JLabel("Username:");
+		this.ipLabel = new JLabel("IP:");
 
 		loginPanel.setLayout(new GridLayout(4, 2));
 		loginPanel.add(this.aboutButton);
-		loginPanel.add(this.ipLabel);
-		loginPanel.add(usernameLabel);
+		loginPanel.add(this.localIpLabel);
+		loginPanel.add(this.usernameLabel);
 		loginPanel.add(this.username);
-		loginPanel.add(ipLabel);
+		loginPanel.add(this.ipLabel);
 		loginPanel.add(this.ip);
 		loginPanel.add(this.connectButton);
 		loginPanel.add(this.disconnectButton);
@@ -89,19 +92,7 @@ public class MainPanel extends JPanel implements ActionListener {
 			about.setSize(new Dimension(200, 150));
 			about.setLocationRelativeTo(null);
 
-			JLabel text = new JLabel();
-			text.setText(
-				"<html><div style='text-align: center;'>"
-				+ "Project Sora<br>"
-				+ "Version " + this.version + "<br>"
-				+ "<br>"
-				+ "Local PeerToPeer Chat<br>"
-				+ "written by Andrea Lepori<br>"
-				+ "</div></html>");
-
-			text.setHorizontalAlignment(JLabel.CENTER);
-			
-			about.add(text);
+			about.add(this.aboutLabel);
 			about.setVisible(true);
 		}
 	}

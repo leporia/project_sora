@@ -1,4 +1,5 @@
 import java.util.*;
+import java.io.*;
 import java.text.*;
 import java.net.*;
 import java.awt.*;
@@ -10,13 +11,12 @@ import com.google.gson.Gson;
 class Manager implements ActionListener, Runnable {
 
 	//TODO fix rejoin bug
-	//TODO make your messages more outstanding
+	//TODO setting light font for dark GTK themes
 
 	public static final String version = "1.1";
 
 	private MainPanel mainPanel;
 	private ConnectionManager linker;
-	private AdminPanel adminPanel;
 
 	private ArrayList<String> usernameList = new ArrayList<String>();
 	private boolean listen = false;
@@ -25,6 +25,7 @@ class Manager implements ActionListener, Runnable {
 	private Thread t;
 	private Gson gson = new Gson();
 	private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+	private Font font;
 
 	public Manager(MainPanel mainPanel, ConnectionManager linker) {
 		this.mainPanel = mainPanel;
@@ -35,7 +36,7 @@ class Manager implements ActionListener, Runnable {
 	}
 
 	private void initUI() {
-		this.mainPanel.ipLabel.setText(linker.localIP);
+		this.mainPanel.localIpLabel.setText(linker.localIP);
 		this.mainPanel.input.addActionListener(this);
 		this.mainPanel.connectButton.addActionListener(this);
 		this.mainPanel.disconnectButton.addActionListener(this);
@@ -43,6 +44,39 @@ class Manager implements ActionListener, Runnable {
 
 		this.mainPanel.connectButton.setEnabled(true);
 		this.mainPanel.disconnectButton.setEnabled(false);
+
+		try {
+			//TODO improve this with classpath
+
+			InputStream stream = new BufferedInputStream(
+					new FileInputStream("../lib/FiraMono.ttf"));
+			
+			Font ttfBase = Font.createFont(Font.TRUETYPE_FONT, stream);
+			this.font = ttfBase.deriveFont(Font.PLAIN, 14);
+		} catch (IOException|FontFormatException e) {
+			e.printStackTrace();
+		}
+
+		this.mainPanel.ipLabel.setFont(this.font);
+		this.mainPanel.input.setFont(this.font);
+		this.mainPanel.connectButton.setFont(this.font);
+		this.mainPanel.disconnectButton.setFont(this.font);
+		this.mainPanel.localIpLabel.setFont(this.font);
+		this.mainPanel.usernameLabel.setFont(this.font);
+		this.mainPanel.aboutButton.setFont(this.font);
+		
+		this.mainPanel.aboutLabel = new JLabel();
+		this.mainPanel.aboutLabel.setText(
+			"<html><div style='text-align: center;'>"
+			+ "Project Sora<br>"
+			+ "Version " + this.version + "<br>"
+			+ "<br>"
+			+ "Local PeerToPeer Chat<br>"
+			+ "written by Andrea Lepori<br>"
+			+ "</div></html>");
+
+		this.mainPanel.aboutLabel.setHorizontalAlignment(JLabel.CENTER);
+		this.mainPanel.aboutLabel.setFont(this.font);
 	}
 
 	public void start() {
@@ -96,7 +130,7 @@ class Manager implements ActionListener, Runnable {
 						}
 						break;
 					case MESSAGE:
-						this.chatPrint("[" + decodedMsg.time + "] "
+						this.chatPrint("# [" + decodedMsg.time + "] "
 							+ decodedMsg.username + ": "
 							+ decodedMsg.text, Color.BLACK);
 						break;
@@ -240,13 +274,12 @@ class Manager implements ActionListener, Runnable {
 			String text = textbox.getText();
 			textbox.setText("");
 
-			if (text.equals("/admin")) {
-				this.adminPanel = new AdminPanel();
-				this.adminPanel.sendBtn.addActionListener(this);
-			} else if (text.hashCode() != 0) {
-				this.chatPrint("["
+			if (text.hashCode() != 0) {
+				if (this.connected) {
+				this.chatPrint("@ ["
 					+ this.timeFormat.format(System.currentTimeMillis())
 					+ "] You: " + text, Color.BLACK);
+				}
 
 				Message msg = new Message();
 				msg.type = MessageType.MESSAGE;
@@ -254,31 +287,12 @@ class Manager implements ActionListener, Runnable {
 
 				this.send(msg);
 			}
-		} else if (e.getSource() == adminPanel.sendBtn) {
-			//TODO get this working
-
-			/*
-			Message msg = new Message();
-			msg.version = this.adminPanel.version.getText();
-			msg.type = this.adminPanel.type.getText();
-			msg.text = this.adminPanel.text.getText();
-			msg.error = this.adminPanel.error.getText();
-			msg.cmd = this.adminPanel.cmd.getText();
-			msg.ip = this.adminPanel.ip.getText();
-			msg.username = this.adminPanel.username.getText();
-			if (this.adminPanel.time.getText().equals("now")) {
-				msg.time = this.timeFormat.format(System.currentTimeMillis());
-			} else {
-				msg.time = this.adminPanel.time.getText();
-			}
-
-			linker.send(gson.toJson(msg));
-			*/
 		}
 	}
 
 	private void printList() {
-		String tmp = "<html>Connected users:<br>" + this.username + "<br>";
+		String tmp = "<html>Connected users:<br>" + this.username
+			+ " (You)" + "<br>";
 		for (int i = 0; i < usernameList.size(); i++) {
 			if (!this.usernameList.get(i).equals(this.username)) {
 				tmp = tmp + usernameList.get(i) + "<br>";
@@ -293,6 +307,7 @@ class Manager implements ActionListener, Runnable {
 
 		Style style = this.mainPanel.chat.addStyle("Default", null);
 		StyleConstants.setForeground(style, c);
+		StyleConstants.setFontFamily(style, this.font.getFamily());
 
 		try {
 			doc.insertString(doc.getLength(), msg + "\n", style);
